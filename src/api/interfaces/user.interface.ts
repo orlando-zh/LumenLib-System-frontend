@@ -9,3 +9,10 @@ export interface Usuario {
     FechaCreacion?: string;
     FechaActualizacion?: string;
 }
+
+export interface CreateUserDTO {
+    NombreCompleto: string;
+    Email: string;
+    Password: string;
+    Rol?: string;
+}

@@ -1,81 +1,34 @@
-import api from '../axiosConfig';
-import type { AxiosResponse } from 'axios';
-import { userAuth } from '@/stores/authStore';
-import type { Usuario } from '../interfaces/user.interface';
-
-export interface CreateUserDTO {
-    NombreCompleto: string;
-    Email: string;
-    Password: string;
-    Rol?: string;
-}
-
-export const userService = {
-
-    async getAllUsers(): Promise<Usuario[] | null> {
-        const authStore = userAuth();
-        const token = authStore.token;
-
-        try {
-            const response = await api.get<Usuario[]>('/usuarios', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            return null;
-        }
-    },
+import { usersApi } from '@/api/axiosConfig';
+import type { Usuario, CreateUserDTO } from '@/api/interfaces/user.interface';
 
 
-    async createUser(data: CreateUserDTO): Promise<AxiosResponse<Usuario>> {
-        const authStore = userAuth();
-        const token = authStore.token;
 
-        try {
-            return await api.post<Usuario>('/usuarios', data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-        } catch (error) {
-            console.error('Error creating user:', error);
-            throw error;
-        }
-    },
+// Obtener todos los usuarios
+export const getAllUsers = async (): Promise<Usuario[]> => {
+    // El token se inyecta solo gracias al interceptor en axiosConfig
+    const response = await usersApi.get<Usuario[]>('/usuarios');
+    return response.data;
+};
 
+// Crear usuario (Usando el DTO importado)
+export const createUser = async (data: CreateUserDTO): Promise<Usuario> => {
+    const response = await usersApi.post<Usuario>('/usuarios', data);
+    return response.data;
+};
 
-    async updateUser(id: number, data: Partial<Usuario>): Promise<AxiosResponse<Usuario>> {
-        const authStore = userAuth();
-        const token = authStore.token;
+// Actualizar usuario
+export const updateUser = async (id: number, data: Partial<Usuario>): Promise<Usuario> => {
+    const response = await usersApi.put<Usuario>(`/usuarios/${id}`, data);
+    return response.data;
+};
 
-        try {
-            return await api.put<Usuario>(`/usuarios/${id}`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-        } catch (error) {
-            console.error('Error updating user:', error);
-            throw error;
-        }
-    },
+// Eliminar usuario
+export const deleteUser = async (id: number): Promise<void> => {
+    await usersApi.delete<void>(`/usuarios/${id}`);
+};
 
-    async deleteUser(id: number): Promise<AxiosResponse<void>> {
-        const authStore = userAuth();
-        const token = authStore.token;
-
-        try {
-            return await api.delete<void>(`/usuarios/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-        } catch (error) {
-            console.error('Error deleting user:', error);
-            throw error;
-        }
-    }
+// Obtener un usuario por ID
+export const getUserById = async (id: number): Promise<Usuario> => {
+    const response = await usersApi.get<Usuario>(`/usuarios/${id}`);
+    return response.data;
 };
