@@ -16,6 +16,9 @@ import SubMenu from '@/components/ui/SubMenu.vue'
         <OptionSidebar route="/admin/staff" name="Usuarios" icon="#" />
         <hr class="my-1.5 border-gray-400" />
 
+        <OptionSidebar route="/admin/libros" name="Libros" icon="#" />
+        <hr class="my-1.5 border-gray-400" />
+
 
         <!-- Libros -->
         <SubMenu name="Libros">

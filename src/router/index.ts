@@ -5,6 +5,7 @@ import LoginView from '../views/LoginView.vue'
 import DashboardAdmin from '@/views/DashboardAdmin.vue'
 import HomeComponent from "@/components/layouts/HomeComponent.vue";
 import LibraryStaffView from '@/components/ui/LibraryStaff.vue'
+import LibraryBooks from '@/components/ui/LibraryBooks.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,7 @@ const router = createRouter({
             children: [
                 { path: '', name: 'admin-home', component: HomeComponent, meta: { requiresAuth: true, role: [ROLES.ADMIN, ROLES.BIBLIOTECARIO]}},
                 { path: 'staff', name: 'admin-staff', component: LibraryStaffView, meta: {requiresAuth: true, role: [ROLES.ADMIN, ROLES.BIBLIOTECARIO]}},
+                { path: 'libros', name: 'admin-books', component: LibraryBooks,  meta: {requiresAuth: true, role: [ROLES.ADMIN, ROLES.BIBLIOTECARIO]}},
             ]
         },
 
