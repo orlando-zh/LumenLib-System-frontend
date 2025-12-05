@@ -2,6 +2,10 @@
 import { ref, onMounted } from 'vue';
 import type { Usuario } from '@/api/interfaces/user.interface';
 import { getAllUsers } from '@/api/services/user.service'; // Vite resuelve el .ts automáticamente
+import UserModal from '@/components/modals/UserModal.vue'; //  IMPORTA EL MODAL
+
+const showModal = ref(false); // CONTROLAR EL MODAL
+
 
 const isLoading = ref(true);
 const users = ref<Usuario[]>([]);
@@ -20,6 +24,11 @@ const fetchUsers = async () => {
   }
 };
 
+const handleSavedUser = () => {
+  showModal.value = false;
+  fetchUsers(); // Recarga la tabla con el nuevo usuario
+};
+
 onMounted(() => {
   fetchUsers();
 });
@@ -30,6 +39,10 @@ onMounted(() => {
 
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-xl font-bold">Catálogo de Usuarios</h1>
+
+      <button class="btn btn-primary btn-sm" @click="showModal = true">
+      Agregar Usuario
+    </button>
 
     </div>
 
@@ -81,5 +94,13 @@ onMounted(() => {
     <div v-else-if="!isLoading">
       No hay usuarios para mostrar.
     </div>
+    <UserModal
+      v-if="showModal"
+      @close="showModal = false"
+      @saved="handleSavedUser"
+    />
+
   </main>
+
+
 </template>
