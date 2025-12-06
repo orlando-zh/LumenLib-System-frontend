@@ -4,7 +4,7 @@ import { userAuth } from '@/stores/authStore'
 import { ROLES } from '@/constants/roles'
 
 // --- VISTAS ---
-import LoginView from '../views/LoginView.vue'
+import LoginView from '../components/ui/LoginView.vue'
 import NotFound from '@/components/layouts/NotFound.vue'
 import Unauthorized from '@/components/ui/Unauthorized.vue'
 import DashboardAdmin from '@/views/DashboardAdmin.vue'
@@ -14,6 +14,8 @@ import LibraryBooks from '@/components/ui/LibraryBooks.vue'
 import ReaderHomeView from '@/views/ReaderHomeView.vue'
 import ReaderCatalog from "@/components/ui/ReaderCatalog.vue"
 import ReaderHistory from "@/components/ui/ReaderHistory.vue"
+import LibraryCategoriesView from "@/components/ui/LibraryCategoriesView.vue";
+import LibraryAuthorsView from "@/components/ui/LibraryAuthorsView.vue";
 
 const routes: Array<RouteRecordRaw> = [
     // 1. RAÍZ: Redirige al login (o el guardián lo moverá si ya hay sesión)
@@ -48,6 +50,16 @@ const routes: Array<RouteRecordRaw> = [
                 component: LibraryStaffView
             },
             {
+                path: 'categorias',
+                name: 'admin-categories',
+                component: LibraryCategoriesView
+            },
+            {
+                path: 'autores',
+                name: 'admin-authors',
+                component: LibraryAuthorsView
+            },
+            {
                 path: 'libros', // /admin/libros
                 name: 'admin-books',
                 component: LibraryBooks
@@ -71,6 +83,7 @@ const routes: Array<RouteRecordRaw> = [
                 name: 'reader-history',
                 component: ReaderHistory
             },
+
             // Redirección por defecto: Si entra a /lector va al catálogo
             {
                 path: '',

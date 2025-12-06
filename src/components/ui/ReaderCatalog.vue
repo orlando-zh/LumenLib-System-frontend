@@ -4,14 +4,17 @@ import { getAllBooks } from '@/api/services/book.service';
 import type { Libro } from '@/api/interfaces/book.interface';
 import { getImageUrl } from '@/utils/constants';
 
+// ⬅️ NUEVO: Importamos el componente reutilizable
+import SearchBar from '@/components/ui/SearchBar.vue';
+
 const searchTerm = ref('');
 const books = ref<Libro[]>([]);
 const isLoading = ref(false);
 const errorMsg = ref('');
 let searchTimeout: number | undefined = undefined;
-const SEARCH_DELAY_MS = 400;
+const SEARCH_DELAY_MS = 400; // Mantenemos el delay aquí para el watcher
 
-const loadBooks = async (query: string) => { // Acepta el query como argumento
+const loadBooks = async (query: string) => {
   isLoading.value = true;
   errorMsg.value = '';
   try {
@@ -33,7 +36,7 @@ const debouncedLoadBooks = () => {
   }, SEARCH_DELAY_MS);
 };
 
-
+// ⚠️ El watcher sigue activo y monitorea la ref 'searchTerm'
 watch(searchTerm, () => {
   debouncedLoadBooks();
 });
@@ -52,20 +55,13 @@ onMounted(() => {
         <p class="text-gray-500">Explora nuestra colección disponible.</p>
       </div>
 
-      <div class="form-control w-full md:w-auto">
-        <div class="input-group">
-          <input
-              v-model="searchTerm"
-              type="text"
-              placeholder="Buscar por título..."
-              class="input input-bordered w-full md:w-80"
-
-          />
-          <button class="btn btn-square btn-ghost" @click="debouncedLoadBooks">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </button>
-        </div>
+      <div class="w-full md:w-80">
+        <SearchBar
+            v-model="searchTerm"
+            placeholder="Buscar por título"
+        />
       </div>
+
     </div>
 
     <div v-if="isLoading" class="flex justify-center py-20">
