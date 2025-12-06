@@ -1,31 +1,38 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { Libro } from '@/api/interfaces/book.interface'
-import AddBookModal from '@/components/modals/AddBookModal.vue'
+import { ref, onMounted } from 'vue';
+import type { Libro } from '@/api/interfaces/book.interface';
+import { getAllBooks } from '@/api/services/book.service'; // Importamos el servicio
+import AddBookModal from '@/components/modals/AddBookModal.vue';
 
-const showModal = ref(false)
-const books = ref<Libro[]>([])
+const showModal = ref(false);
+const isLoading = ref(true);
+const books = ref<Libro[]>([]);
 
-// Puedes reemplazar esto por fetch a tu API cuando lo tengas
-const loadMockBooks = () => {
-  books.value = [
-    {
-      LibroID: 1,
-      Titulo: 'Ejemplo: Aprendiendo Vue',
-      ISBN: '978-1234567890',
-      AnioPublicacion: 2023,
-      Stock: 5,
-      AutorID: 1,
-      CategoriaID: 1
+// Función para traer los libros de la API
+const fetchBooks = async () => {
+  try {
+    isLoading.value = true;
+    const data = await getAllBooks();
+    if (data) {
+      books.value = data;
     }
-  ]
-}
+  } catch (error) {
+    console.error('Error fetching books:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
-const handleBookAdded = (book: Libro) => {
-  books.value.push(book)
-}
+// Manejador: Cuando se crea un libro, cerramos modal y recargamos la tabla
+const handleBookAdded = () => {
+  showModal.value = false;
+  fetchBooks(); // Recarga los datos frescos de la API
+};
 
-loadMockBooks()
+// Cargar al montar el componente
+onMounted(() => {
+  fetchBooks();
+});
 </script>
 
 <template>
@@ -33,47 +40,70 @@ loadMockBooks()
 
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-xl font-bold">Catálogo de Libros</h1>
-
-      <button class="btn btn-primary btn-sm" @click="showModal = true">Agregar Libro</button>
-
+      <button class="btn btn-primary btn-sm" @click="showModal = true">
+        Agregar Libro
+      </button>
     </div>
 
-    <div v-if="books.length === 0" class="text-center py-8">
-      <p class="text-gray-500">No hay libros registrados aún.</p>
+    <div v-if="isLoading" class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
-    <div v-else class="overflow-x-auto max-h-[600px] rounded-lg border border-base-200 mt-4">
+    <div
+        v-else-if="books.length > 0"
+        ref="tableContainer"
+        class="overflow-x-auto max-h-[500px] rounded-lg border border-base-200 mt-4"
+    >
       <table class="table w-full">
         <thead class="bg-base-200 sticky top-0 z-10">
-          <tr>
-            <th>LibroID</th>
-            <th>Título</th>
-            <th>ISBN</th>
-            <th>Año</th>
-            <th>Stock</th>
-            <th>AutorID</th>
-            <th>CategoriaID</th>
-            <th class="text-center">Acciones</th>
-          </tr>
+        <tr>
+          <th>ID</th>
+          <th class="min-w-[200px]">Título</th>
+          <th>ISBN</th>
+          <th class="text-center">Stock</th>
+          <th>AutorID</th>
+          <th class="text-center">Acciones</th>
+        </tr>
         </thead>
         <tbody>
-          <tr v-for="book in books" :key="book.LibroID">
-            <td class="font-mono text-sm">{{ book.LibroID }}</td>
-            <td class="font-medium">{{ book.Titulo }}</td>
-            <td class="text-sm">{{ book.ISBN }}</td>
-            <td class="text-sm">{{ book.AnioPublicacion }}</td>
-            <td class="text-sm">{{ book.Stock }}</td>
-            <td class="text-sm">{{ book.AutorID }}</td>
-            <td class="text-sm">{{ book.CategoriaID }}</td>
-            <td class="text-center">
-              <button class="btn btn-ghost btn-xs">Editar</button>
-            </td>
-          </tr>
+        <tr v-for="book in books" :key="book.LibroID">
+          <td class="font-mono text-xs opacity-60">{{ book.LibroID }}</td>
+
+          <td>
+            <div class="text-sm">{{ book.Titulo }}</div>
+            <div class="text-xs opacity-50">Publicado: {{ book.AnioPublicacion }}</div>
+          </td>
+
+          <td class="text-sm font-mono">{{ book.ISBN }}</td>
+
+          <td class="text-center">
+              <span class="badge badge-sm" :class="book.Stock > 0 ? 'badge-success badge-outline' : 'badge-error'">
+                {{ book.Stock }}
+              </span>
+          </td>
+
+          <td>
+            <div class="text-sm">Autor: {{ book.AutorID }}</div>
+            <div class="text-xs opacity-50">Cat: {{ book.CategoriaID }}</div>
+          </td>
+
+          <td class="text-center">
+            <button class="btn btn-ghost btn-xs">Editar</button>
+          </td>
+        </tr>
         </tbody>
       </table>
     </div>
 
-    <AddBookModal v-if="showModal" @close="showModal = false" @book-added="handleBookAdded" />
+    <div v-else-if="!isLoading" class="text-center py-8 text-gray-500">
+      No hay libros registrados aún.
+    </div>
+
+    <AddBookModal
+        v-if="showModal"
+        @close="showModal = false"
+        @book-added="handleBookAdded"
+    />
 
   </main>
 </template>

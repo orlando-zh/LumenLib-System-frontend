@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance } from 'axios';
 import { userAuth } from '@/stores/authStore';
 
+// Función fábrica para crear instancias de API con interceptores
 export const createApi = (baseURL: string): AxiosInstance => {
     const api = axios.create({
         baseURL,
@@ -10,10 +11,12 @@ export const createApi = (baseURL: string): AxiosInstance => {
         }
     });
 
+    // --- INTERCEPTOR DE REQUEST (Inyectar Token) ---
     api.interceptors.request.use(
         (config) => {
             const authStore = userAuth();
 
+            // Si existe un token en Pinia, lo agregamos al header
             if (authStore.token) {
                 config.headers.Authorization = `Bearer ${authStore.token}`;
             }
@@ -29,9 +32,10 @@ export const createApi = (baseURL: string): AxiosInstance => {
         (error) => {
             console.error('API Error:', error.response?.data || error.message);
 
+            // Si el backend dice "No autorizado" (Token vencido o falso)
             if (error.response?.status === 401) {
                 const authStore = userAuth();
-                authStore.logout();
+                authStore.logout(); // Limpiamos todo y mandamos al login
             }
 
             return Promise.reject(error);
@@ -41,4 +45,10 @@ export const createApi = (baseURL: string): AxiosInstance => {
     return api;
 };
 
-export const usersApi = createApi(import.meta.env.VITE_API_URL || 'http://localhost:4000');
+// --- EXPORTACIÓN DE INSTANCIAS ---
+
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
+export const usersApi = createApi(BASE_URL);
+export const booksApi = createApi(BASE_URL);
