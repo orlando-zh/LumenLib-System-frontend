@@ -3,8 +3,11 @@ import { ref, onMounted } from 'vue';
 import type { Libro } from '@/api/interfaces/book.interface';
 import { getAllBooks } from '@/api/services/book.service'; // Importamos el servicio
 import AddBookModal from '@/components/modals/AddBookModal.vue';
+import EditBookModal from '@/components/modals/EditBookModal.vue';
 
 const showModal = ref(false);
+const showEditModal = ref(false);
+const bookToEdit = ref<Libro | null>(null);
 const isLoading = ref(true);
 const books = ref<Libro[]>([]);
 
@@ -28,6 +31,27 @@ const handleBookAdded = () => {
   showModal.value = false;
   fetchBooks(); // Recarga los datos frescos de la API
 };
+
+const openEditModal = (book: Libro) => {
+  bookToEdit.value = book
+  showEditModal.value = true
+}
+
+const handleBookUpdated = (updated: Libro) => {
+  showEditModal.value = false
+  bookToEdit.value = null
+  // Actualizar localmente reemplazando el libro en el array
+  const idx = books.value.findIndex(b => b.LibroID === updated.LibroID)
+  if (idx !== -1) {
+    // Reemplazamos el elemento
+    books.value.splice(idx, 1, updated)
+    // Forzar reasignación para asegurar reactividad en todos los casos
+    books.value = books.value.slice()
+  } else {
+    // Si no se encuentra, recargamos desde la API
+    fetchBooks()
+  }
+}
 
 // Cargar al montar el componente
 onMounted(() => {
@@ -88,7 +112,7 @@ onMounted(() => {
           </td>
 
           <td class="text-center">
-            <button class="btn btn-ghost btn-xs">Editar</button>
+            <button class="btn btn-ghost btn-xs" @click="openEditModal(book)">Editar</button>
           </td>
         </tr>
         </tbody>
@@ -103,6 +127,13 @@ onMounted(() => {
         v-if="showModal"
         @close="showModal = false"
         @book-added="handleBookAdded"
+    />
+
+    <EditBookModal
+      v-if="showEditModal && bookToEdit"
+      :book="bookToEdit"
+      @close="showEditModal = false"
+      @book-updated="handleBookUpdated"
     />
 
   </main>
