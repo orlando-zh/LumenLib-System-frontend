@@ -1,25 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-// import { getMyLoans } from '@/api/services/loan.service'; // Descomentar cuando conectes la API
+import loanService from '@/api/services/loan.service';
+import type { LoanHistory } from '@/api/interfaces/loans.interface';
 
-const loans = ref<any[]>([]);
+const loans = ref<LoanHistory[]>([]);
 const isLoading = ref(false);
-
-// Datos simulados
-const mockLoans = [
-  { PrestamoID: 101, Libro: 'El Principito', FechaPrestamo: '2025-11-20', FechaDevolucion: null, Estado: 'Activo' },
-  { PrestamoID: 98, Libro: 'Clean Code', FechaPrestamo: '2025-10-15', FechaDevolucion: '2025-10-25', Estado: 'Devuelto' },
-  { PrestamoID: 105, Libro: 'Cien Años de Soledad', FechaPrestamo: '2025-12-01', FechaDevolucion: null, Estado: 'Activo' },
-];
 
 const fetchHistory = async () => {
   isLoading.value = true;
   try {
-    // const data = await getMyLoans();
-    // loans.value = data;
-    setTimeout(() => { loans.value = mockLoans }, 600);
+    const data = await loanService.getMyLoanHistory();
+    loans.value = data;
   } catch (error) {
-    console.error(error);
+    console.error('Error al obtener historial de préstamos:', error);
   } finally {
     isLoading.value = false;
   }
@@ -30,14 +23,16 @@ onMounted(() => {
 });
 
 // Función para determinar el color del badge según estado
-const getStatusBadge = (fechaDevolucion: string | null) => {
-  if (fechaDevolucion) return 'badge-success badge-outline'; // Ya devuelto
-  return 'badge-warning'; // Aún lo tiene
+const getStatusBadge = (estado: string) => {
+  if (estado === 'Devuelto') return 'badge-success badge-outline';
+  return 'badge-warning';
 };
 
-const getStatusText = (fechaDevolucion: string | null) => {
-  if (fechaDevolucion) return 'Devuelto';
-  return 'En Posesión';
+// Función para formatear fechas
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
 };
 </script>
 
@@ -69,22 +64,22 @@ const getStatusText = (fechaDevolucion: string | null) => {
           <td class="font-mono text-xs opacity-50">{{ index + 1 }}</td>
 
           <td>
-            <div class="font-bold text-primary">{{ loan.Libro }}</div>
-            <div class="text-xs opacity-50">ID Préstamo: {{ loan.PrestamoID }}</div>
+            <div class="font-bold text-primary">{{ loan.Titulo }}</div>
+            <div class="text-xs opacity-50">ISBN: {{ loan.ISBN }} • ID Préstamo: {{ loan.PrestamoID }}</div>
           </td>
 
-          <td>{{ loan.FechaPrestamo }}</td>
+          <td>{{ formatDate(loan.FechaPrestamo) }}</td>
 
           <td>
               <span v-if="loan.FechaDevolucion" class="text-success font-medium">
-                {{ loan.FechaDevolucion }}
+                {{ formatDate(loan.FechaDevolucion) }}
               </span>
             <span v-else class="text-gray-400 italic">-- Pendiente --</span>
           </td>
 
           <td class="text-center">
-            <div class="badge" :class="getStatusBadge(loan.FechaDevolucion)">
-              {{ getStatusText(loan.FechaDevolucion) }}
+            <div class="badge" :class="getStatusBadge(loan.Estado)">
+              {{ loan.Estado }}
             </div>
           </td>
         </tr>
