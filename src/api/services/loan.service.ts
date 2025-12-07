@@ -17,6 +17,12 @@ export default {
     async createLoan(data: LoanTransactionDTO): Promise<LoanCreatedResponse> {
         const response = await booksApi.post<LoanCreatedResponse>('/api/library/loans', data);
         return response.data;
+    },
+
+
+    async getMyLoanHistory(): Promise<ActiveLoan[]> {
+        const response = await booksApi.get<ActiveLoan[]>('/api/library/loans/my-history');
+        return response.data;
     }
 };
 
