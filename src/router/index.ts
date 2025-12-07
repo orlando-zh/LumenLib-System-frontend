@@ -21,7 +21,6 @@ import RegisterLoan from "@/views/RegisterLoan.vue";
 
 
 const routes: Array<RouteRecordRaw> = [
-    // 1. RAÍZ: Redirige al login (o el guardián lo moverá si ya hay sesión)
     {
         path: '/',
         name: 'root',
@@ -31,15 +30,13 @@ const routes: Array<RouteRecordRaw> = [
         path: '/login',
         name: 'login',
         component: LoginView,
-        meta: { guest: true } // Marca explicita para rutas de invitados
+        meta: { guest: true }
     },
 
-    // --- ÁREA ADMINISTRATIVA (Staff) ---
+    // --- ÁREA ADMINISTRATIVA ---
     {
         path: '/admin',
-        // Componente Layout principal del admin
         component: DashboardAdmin,
-        // Meta en el padre protege a todos los hijos automáticamente
         meta: { requiresAuth: true, role: [ROLES.ADMIN, ROLES.BIBLIOTECARIO] },
         children: [
             {
@@ -123,7 +120,7 @@ const router = createRouter({
     routes,
 })
 
-// --- GUARDIA DE NAVEGACIÓN PRO ---
+// --- GUARDIA DE NAVEGACIÓN ---
 router.beforeEach((to, from, next) => {
     const authStore = userAuth()
     const isAuthenticated = authStore.isAuthenticated

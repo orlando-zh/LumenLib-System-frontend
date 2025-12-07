@@ -3,8 +3,11 @@ import { ref, onMounted } from 'vue';
 import type { Usuario } from '@/api/interfaces/user.interface';
 import { getAllUsers } from '@/api/services/user.service'; // Vite resuelve el .ts automáticamente
 import UserModal from '@/components/modals/UserModal.vue'; //  IMPORTA EL MODAL
+import EditUserModal from '@/components/modals/EditUserModal.vue';
 
 const showModal = ref(false); // CONTROLAR EL MODAL
+const showEditModal = ref(false);
+const userToEdit = ref<Usuario | null>(null);
 
 
 const isLoading = ref(true);
@@ -27,6 +30,17 @@ const fetchUsers = async () => {
 const handleSavedUser = () => {
   showModal.value = false;
   fetchUsers(); // Recarga la tabla con el nuevo usuario
+};
+
+const openEditModal = (user: Usuario) => {
+  userToEdit.value = user;
+  showEditModal.value = true;
+};
+
+const handleUserUpdated = () => {
+  showEditModal.value = false;
+  userToEdit.value = null;
+  fetchUsers(); // Recarga la tabla con datos actualizados
 };
 
 onMounted(() => {
@@ -84,7 +98,7 @@ onMounted(() => {
           </td>
 
           <td class="text-center">
-            <button class="btn btn-ghost btn-xs">Editar</button>
+            <button class="btn btn-ghost btn-xs" @click="openEditModal(user)">Editar</button>
           </td>
         </tr>
         </tbody>
@@ -98,6 +112,13 @@ onMounted(() => {
       v-if="showModal"
       @close="showModal = false"
       @saved="handleSavedUser"
+    />
+
+    <EditUserModal
+      v-if="showEditModal && userToEdit"
+      :user="userToEdit"
+      @close="showEditModal = false"
+      @saved="handleUserUpdated"
     />
 
   </main>

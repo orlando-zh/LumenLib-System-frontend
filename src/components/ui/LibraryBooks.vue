@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import type { Libro } from '@/api/interfaces/book.interface';
-import { getAllBooks } from '@/api/services/book.service'; // Importamos el servicio
+import { getAllBooks } from '@/api/services/book.service'; 
 import AddBookModal from '@/components/modals/AddBookModal.vue';
+import EditBookModal from '@/components/modals/EditBookModal.vue';
 
 const showModal = ref(false);
+const showEditModal = ref(false);
+const bookToEdit = ref<Libro | null>(null);
+
 const isLoading = ref(true);
 const books = ref<Libro[]>([]);
 
@@ -26,7 +30,28 @@ const fetchBooks = async () => {
 // Manejador: Cuando se crea un libro, cerramos modal y recargamos la tabla
 const handleBookAdded = () => {
   showModal.value = false;
-  fetchBooks(); // Recarga los datos frescos de la API
+  fetchBooks();
+};
+
+// Abrir modal de edición
+const openEditModal = (book: Libro) => {
+  bookToEdit.value = book;
+  showEditModal.value = true;
+};
+
+// Manejar actualizaciones del libro
+const handleBookUpdated = (updated: Libro) => {
+  showEditModal.value = false;
+  bookToEdit.value = null;
+
+  const idx = books.value.findIndex(b => b.LibroID === updated.LibroID);
+
+  if (idx !== -1) {
+    books.value.splice(idx, 1, updated);
+    books.value = books.value.slice(); // Forzar reactividad
+  } else {
+    fetchBooks(); // Si no está en la lista, recargar
+  }
 };
 
 // Cargar al montar el componente
@@ -50,47 +75,53 @@ onMounted(() => {
     </div>
 
     <div
-        v-else-if="books.length > 0"
-        ref="tableContainer"
-        class="overflow-x-auto max-h-[500px] rounded-lg border border-base-200 mt-4"
+      v-else-if="books.length > 0"
+      ref="tableContainer"
+      class="overflow-x-auto max-h-[500px] rounded-lg border border-base-200 mt-4"
     >
       <table class="table w-full">
         <thead class="bg-base-200 sticky top-0 z-10">
-        <tr>
-          <th>ID</th>
-          <th class="min-w-[200px]">Título</th>
-          <th>ISBN</th>
-          <th class="text-center">Stock</th>
-          <th>AutorID</th>
-          <th class="text-center">Acciones</th>
-        </tr>
+          <tr>
+            <th>ID</th>
+            <th class="min-w-[200px]">Título</th>
+            <th>ISBN</th>
+            <th class="text-center">Stock</th>
+            <th>AutorID</th>
+            <th class="text-center">Acciones</th>
+          </tr>
         </thead>
+
         <tbody>
-        <tr v-for="book in books" :key="book.LibroID">
-          <td class="font-mono text-xs opacity-60">{{ book.LibroID }}</td>
+          <tr v-for="book in books" :key="book.LibroID">
+            <td class="font-mono text-xs opacity-60">{{ book.LibroID }}</td>
 
-          <td>
-            <div class="text-sm">{{ book.Titulo }}</div>
-            <div class="text-xs opacity-50">Publicado: {{ book.AnioPublicacion }}</div>
-          </td>
+            <td>
+              <div class="text-sm">{{ book.Titulo }}</div>
+              <div class="text-xs opacity-50">Publicado: {{ book.AnioPublicacion }}</div>
+            </td>
 
-          <td class="text-sm font-mono">{{ book.ISBN }}</td>
+            <td class="text-sm font-mono">{{ book.ISBN }}</td>
 
-          <td class="text-center">
-              <span class="badge badge-sm" :class="book.Stock > 0 ? 'badge-success badge-outline' : 'badge-error'">
+            <td class="text-center">
+              <span
+                class="badge badge-sm"
+                :class="book.Stock > 0 ? 'badge-success badge-outline' : 'badge-error'"
+              >
                 {{ book.Stock }}
               </span>
-          </td>
+            </td>
 
-          <td>
-            <div class="text-sm">Autor: {{ book.AutorID }}</div>
-            <div class="text-xs opacity-50">Cat: {{ book.CategoriaID }}</div>
-          </td>
+            <td>
+              <div class="text-sm">Autor: {{ book.AutorID }}</div>
+              <div class="text-xs opacity-50">Cat: {{ book.CategoriaID }}</div>
+            </td>
 
-          <td class="text-center">
-            <button class="btn btn-ghost btn-xs">Editar</button>
-          </td>
-        </tr>
+            <td class="text-center">
+              <button class="btn btn-ghost btn-xs" @click="openEditModal(book)">
+                Editar
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -99,11 +130,19 @@ onMounted(() => {
       No hay libros registrados aún.
     </div>
 
+    <!-- Modal de agregar libro -->
     <AddBookModal
-        v-if="showModal"
-        @close="showModal = false"
-        @book-added="handleBookAdded"
+      v-if="showModal"
+      @close="showModal = false"
+      @book-added="handleBookAdded"
     />
 
+    <!-- Modal de editar libro -->
+    <EditBookModal
+      v-if="showEditModal && bookToEdit"
+      :book="bookToEdit"
+      @close="showEditModal = false"
+      @book-updated="handleBookUpdated"
+    />
   </main>
 </template>
