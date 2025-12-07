@@ -1,31 +1,51 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import type { Libro } from '@/api/interfaces/book.interface';
-import { getAllBooks } from '@/api/services/book.service'; 
+import { getAllBooks, deleteBook } from '@/api/services/book.service';
 import AddBookModal from '@/components/modals/AddBookModal.vue';
 import EditBookModal from '@/components/modals/EditBookModal.vue';
+import SearchBar from '@/components/ui/SearchBar.vue';
 
+
+const showDeleteModal = ref(false);
+const bookToDelete = ref<Libro | null>(null)
+const searchTerm = ref('');
 const showModal = ref(false);
 const showEditModal = ref(false);
 const bookToEdit = ref<Libro | null>(null);
-
-const isLoading = ref(true);
 const books = ref<Libro[]>([]);
+const isLoading = ref(true);
+let searchTimeout: number | undefined = undefined;
+const SEARCH_DELAY_MS = 400;
+
+
 
 // Función para traer los libros de la API
-const fetchBooks = async () => {
+const fetchBooks = async (query = '') => {
   try {
     isLoading.value = true;
-    const data = await getAllBooks();
-    if (data) {
-      books.value = data;
-    }
+    const data = await getAllBooks(query);
+    books.value = data || [];
   } catch (error) {
     console.error('Error fetching books:', error);
   } finally {
     isLoading.value = false;
   }
 };
+
+
+
+const debouncedFetchBooks = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetchBooks(searchTerm.value);
+  }, SEARCH_DELAY_MS);
+};
+
+// Watch sobre searchTerm
+watch(searchTerm, () => {
+  debouncedFetchBooks();
+});
 
 // Manejador: Cuando se crea un libro, cerramos modal y recargamos la tabla
 const handleBookAdded = () => {
@@ -37,6 +57,12 @@ const handleBookAdded = () => {
 const openEditModal = (book: Libro) => {
   bookToEdit.value = book;
   showEditModal.value = true;
+};
+
+
+const openDeleteModal = (book: Libro) => {
+  bookToDelete.value = book;
+  showDeleteModal.value = true;
 };
 
 // Manejar actualizaciones del libro
@@ -54,6 +80,20 @@ const handleBookUpdated = (updated: Libro) => {
   }
 };
 
+const handleBookDeleted = async () => {
+  if (!bookToDelete.value) return;
+
+  try {
+    await deleteBook(bookToDelete.value.LibroID);
+    books.value = books.value.filter(b => b.LibroID !== bookToDelete.value?.LibroID);
+    bookToDelete.value = null;
+    showDeleteModal.value = false;
+  } catch (error) {
+    console.error('Error eliminando libro:', error);
+  }
+};
+
+
 // Cargar al montar el componente
 onMounted(() => {
   fetchBooks();
@@ -63,11 +103,12 @@ onMounted(() => {
 <template>
   <main class="w-full h-full p-4 bg-base-100 rounded-lg shadow-md">
 
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex justify-between items-center mb-4">
       <h1 class="text-xl font-bold">Catálogo de Libros</h1>
-      <button class="btn btn-primary btn-sm" @click="showModal = true">
-        Agregar Libro
-      </button>
+      <div class="flex gap-2">
+        <SearchBar v-model="searchTerm" placeholder="Buscar por título" />
+        <button class="btn btn-primary btn-sm" @click="showModal = true">Agregar Libro</button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="flex justify-center py-8">
@@ -81,47 +122,44 @@ onMounted(() => {
     >
       <table class="table w-full">
         <thead class="bg-base-200 sticky top-0 z-10">
-          <tr>
-            <th>ID</th>
-            <th class="min-w-[200px]">Título</th>
-            <th>ISBN</th>
-            <th class="text-center">Stock</th>
-            <th>AutorID</th>
-            <th class="text-center">Acciones</th>
-          </tr>
+        <tr>
+          <th>ID</th>
+          <th class="min-w-[200px]">Título</th>
+          <th>ISBN</th>
+          <th class="text-center">Stock</th>
+          <th>Autor</th>
+          <th>Categoría</th>
+          <th class="text-center">Acciones</th>
+        </tr>
         </thead>
 
         <tbody>
-          <tr v-for="book in books" :key="book.LibroID">
-            <td class="font-mono text-xs opacity-60">{{ book.LibroID }}</td>
-
-            <td>
-              <div class="text-sm">{{ book.Titulo }}</div>
-              <div class="text-xs opacity-50">Publicado: {{ book.AnioPublicacion }}</div>
-            </td>
-
-            <td class="text-sm font-mono">{{ book.ISBN }}</td>
-
-            <td class="text-center">
-              <span
-                class="badge badge-sm"
-                :class="book.Stock > 0 ? 'badge-success badge-outline' : 'badge-error'"
-              >
-                {{ book.Stock }}
-              </span>
-            </td>
-
-            <td>
-              <div class="text-sm">Autor: {{ book.AutorID }}</div>
-              <div class="text-xs opacity-50">Cat: {{ book.CategoriaID }}</div>
-            </td>
-
-            <td class="text-center">
-              <button class="btn btn-ghost btn-xs" @click="openEditModal(book)">
-                Editar
-              </button>
-            </td>
-          </tr>
+        <tr v-for="book in books" :key="book.LibroID">
+          <td class="font-mono text-xs opacity-60">{{ book.LibroID }}</td>
+          <td>
+            <div class="text-sm">{{ book.Titulo }}</div>
+            <div class="text-xs opacity-50">Publicado: {{ book.AnioPublicacion }}</div>
+          </td>
+          <td class="text-sm font-mono">{{ book.ISBN }}</td>
+          <td class="text-center">
+      <span
+          class="badge badge-sm"
+          :class="book.Stock > 0 ? 'badge-success badge-outline' : 'badge-error'"
+      >
+        {{ book.Stock }}
+      </span>
+          </td>
+          <td class="text-sm">{{ book.NombreAutor }}</td>
+          <td class="text-xs opacity-50">{{ book.NombreCategoria }}</td>
+          <td class="text-center space-x-2">
+            <button class="btn btn-sm btn-info" @click="openEditModal(book)">
+              Editar
+            </button>
+            <button class="btn btn-sm btn-error" @click="openDeleteModal(book)">
+              Eliminar
+            </button>
+          </td>
+        </tr>
         </tbody>
       </table>
     </div>
@@ -144,5 +182,16 @@ onMounted(() => {
       @close="showEditModal = false"
       @book-updated="handleBookUpdated"
     />
+
+    <DeleteBookModal
+        v-if="showDeleteModal && bookToDelete"
+        :book="bookToDelete"
+        modal-id="deleteBookModal"
+        @close="showDeleteModal = false"
+        @confirm="handleBookDeleted"
+    />
+
+
+
   </main>
 </template>
