@@ -7,6 +7,7 @@ const AUTHORS_ENDPOINT = '/api/library/authors';
 
 // 1. Obtener todos los autores
 export const getAllAuthors = async (nombre?: string): Promise<Autor[]> => {
+    // Si se envía un nombre, lo ponemos en los params
     const params = nombre ? { nombre } : {};
 
     const response = await booksApi.get<Autor[]>(AUTHORS_ENDPOINT, { params });
