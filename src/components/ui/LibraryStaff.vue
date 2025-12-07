@@ -1,74 +1,114 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import type { Usuario } from '@/api/interfaces/user.interface';
-import { getAllUsers } from '@/api/services/user.service'; // Vite resuelve el .ts automáticamente
-import UserModal from '@/components/modals/UserModal.vue'; //  IMPORTA EL MODAL
+import { getAllUsers, deleteUser } from '@/api/services/user.service';
+import UserModal from '@/components/modals/UserModal.vue';
 import EditUserModal from '@/components/modals/EditUserModal.vue';
+import DeleteUserModal from '@/components/modals/DeleteUserModal.vue';
+import SearchBar from '@/components/ui/SearchBar.vue';
 
-const showModal = ref(false); // CONTROLAR EL MODAL
-const showEditModal = ref(false);
+// Tabla y búsqueda
+const users = ref<Usuario[]>([]);
+const isLoading = ref(true);
+const errorMsg = ref('');
+const searchTerm = ref('');
+let searchTimeout: number | undefined;
+const SEARCH_DELAY_MS = 400;
+
+// Modales
+const isAddModalOpen = ref(false);
+const isEditModalOpen = ref(false);
 const userToEdit = ref<Usuario | null>(null);
 
+const isDeleteModalOpen = ref(false);
+const userToDelete = ref<Usuario | null>(null);
 
-const isLoading = ref(true);
-const users = ref<Usuario[]>([]);
-
-const fetchUsers = async () => {
+// --- FETCH USERS ---
+const fetchUsers = async (query = '') => {
   try {
     isLoading.value = true;
-    const data = await getAllUsers();
-    if (data) {
-      users.value = data;
-    }
+    const data = await getAllUsers(query);
+    users.value = data || [];
   } catch (error) {
     console.error('Error fetching users:', error);
+    errorMsg.value = 'Error al cargar usuarios.';
   } finally {
     isLoading.value = false;
   }
 };
 
+// --- DEBOUNCE ---
+const debouncedFetchUsers = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => fetchUsers(searchTerm.value), SEARCH_DELAY_MS);
+};
+watch(searchTerm, () => debouncedFetchUsers());
+
+// --- MANEJADORES ---
 const handleSavedUser = () => {
-  showModal.value = false;
-  fetchUsers(); // Recarga la tabla con el nuevo usuario
+  isAddModalOpen.value = false;
+  fetchUsers();
 };
 
 const openEditModal = (user: Usuario) => {
   userToEdit.value = user;
-  showEditModal.value = true;
+  isEditModalOpen.value = true;
 };
 
 const handleUserUpdated = () => {
-  showEditModal.value = false;
+  isEditModalOpen.value = false;
   userToEdit.value = null;
-  fetchUsers(); // Recarga la tabla con datos actualizados
+  fetchUsers();
 };
 
-onMounted(() => {
-  fetchUsers();
-});
+const openDeleteModal = (user: Usuario) => {
+  userToDelete.value = user;
+  isDeleteModalOpen.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (!userToDelete.value) return;
+
+  try {
+    await deleteUser(userToDelete.value.UsuarioID);
+    users.value = users.value.filter(u => u.UsuarioID !== userToDelete.value!.UsuarioID);
+    userToDelete.value = null;
+    isDeleteModalOpen.value = false;
+  } catch (error) {
+    console.error(error);
+    errorMsg.value = 'Error al eliminar el usuario.';
+    isDeleteModalOpen.value = false;
+  }
+};
+
+// --- ON MOUNT ---
+onMounted(() => fetchUsers());
 </script>
 
 <template>
   <main class="w-full h-full p-4 bg-base-100 rounded-lg shadow-md">
 
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex flex-col md:flex-row items-center justify-between mb-4 gap-3">
       <h1 class="text-xl font-bold">Catálogo de Usuarios</h1>
-
-      <button class="btn btn-primary btn-sm" @click="showModal = true">
-      Agregar Usuario
-    </button>
-
+      <div class="flex gap-3 w-full md:w-auto items-center">
+        <SearchBar v-model="searchTerm" placeholder="Buscar por nombre" />
+        <button class="btn btn-primary btn-sm h-9" @click="isAddModalOpen = true">
+          Agregar Usuario
+        </button>
+      </div>
     </div>
+
+    <hr class="mb-4">
 
     <div v-if="isLoading" class="flex justify-center py-8">
       <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
-    <div
-        v-else-if="users.length > 0"
-        ref="tableContainer"
-        class="overflow-x-auto max-h-[500px] rounded-lg border border-base-200 mt-4"
-    >
+    <div v-else-if="errorMsg" class="alert alert-error text-sm my-4">
+      <span>⚠️ {{ errorMsg }}</span>
+    </div>
+
+    <div v-else-if="users.length > 0" class="overflow-x-auto max-h-[500px] rounded-lg border border-base-200 mt-4">
       <table class="table w-full">
         <thead class="bg-base-200 sticky top-0 z-10">
         <tr>
@@ -81,47 +121,43 @@ onMounted(() => {
         </thead>
         <tbody>
         <tr v-for="user in users" :key="user.UsuarioID">
-          <td>{{ user.UsuarioID }}</td>
-
-          <td>
-            <div> {{ user.NombreCompleto }} </div>
-            <div class="text-xs opacity-50"> Registrado el: {{ user.FechaCreacion?.substring(0, 10) || 'N/A' }}</div>
-
-          </td>
-
+          <td class="font-mono text-xs opacity-60">{{ user.UsuarioID }}</td>
+          <td>{{ user.NombreCompleto }}</td>
           <td>{{ user.Email }}</td>
-
-          <td>
-              <span>
-                {{ user.Rol }}
-              </span>
-          </td>
-
-          <td class="text-center">
-            <button class="btn btn-ghost btn-xs" @click="openEditModal(user)">Editar</button>
+          <td>{{ user.Rol }}</td>
+          <td class="text-center space-x-2">
+            <button class="btn btn-sm btn-info" @click="openEditModal(user)">Editar</button>
+            <button class="btn btn-sm btn-error" @click="openDeleteModal(user)">Eliminar</button>
           </td>
         </tr>
         </tbody>
       </table>
     </div>
 
-    <div v-else-if="!isLoading">
+    <div v-else-if="!isLoading" class="text-center py-8 text-gray-500">
       No hay usuarios para mostrar.
     </div>
+
+    <!-- MODALES -->
     <UserModal
-      v-if="showModal"
-      @close="showModal = false"
-      @saved="handleSavedUser"
+        v-if="isAddModalOpen"
+        @close="isAddModalOpen = false"
+        @saved="handleSavedUser"
     />
 
     <EditUserModal
-      v-if="showEditModal && userToEdit"
-      :user="userToEdit"
-      @close="showEditModal = false"
-      @saved="handleUserUpdated"
+        v-if="isEditModalOpen && userToEdit"
+        :user="userToEdit"
+        @close="() => { isEditModalOpen = false; userToEdit = null }"
+        @saved="handleUserUpdated"
     />
 
+    <DeleteUserModal
+        v-if="userToDelete"
+        :user="userToDelete"
+        modal-id="delete_user_modal"
+        @close="userToDelete = null"
+        @confirm="handleConfirmDelete"
+    />
   </main>
-
-
 </template>

@@ -2,12 +2,12 @@ import { usersApi } from '@/api/axiosConfig';
 import type { Usuario, CreateUserDTO } from '@/api/interfaces/user.interface';
 
 // Obtener todos los usuarios
-export const getAllUsers = async (): Promise<Usuario[]> => {
-    // El token se inyecta solo gracias al interceptor en axiosConfig
-    const response = await usersApi.get<Usuario[]>('/api/users');
+export const getAllUsers = async (searchTerm?: string): Promise<Usuario[]> => {
+    const params = searchTerm ? { nombre: searchTerm } : undefined;
+
+    const response = await usersApi.get<Usuario[]>('/api/users', { params });
     return response.data;
 };
-
 // Crear usuario (Usando el DTO importado)
 export const createUser = async (data: CreateUserDTO): Promise<Usuario> => {
     const response = await usersApi.post<Usuario>('/api/users', data);

@@ -1,27 +1,37 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'; // ⬅️ AGREGAMOS 'watch'
+import { ref, onMounted, watch } from 'vue';
 import { getAllAuthors, deleteAuthor } from '@/api/services/author.service';
 import type { Autor } from '@/api/interfaces/author.interface';
-import SearchBar from '@/components/ui/SearchBar.vue'; // ⬅️ Importamos el buscador
+import AddAuthorModal from "@/components/modals/AddAuthorModal.vue";
+import EditAuthorModal from '@/components/modals/EditAuthorModal.vue';
+import DeleteAuthorModal from '@/components/modals/DeleteAuthorModal.vue';
 
-const authors = ref<Autor[]>([]); // Array de Autores
+import SearchBar from '@/components/ui/SearchBar.vue';
+
+
+const authors = ref<Autor[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
-const isModalOpen = ref(false);
+
+// Estados de los modales
+const isAddModalOpen = ref(false);
+const isEditModalOpen = ref(false);
+const authorToEdit = ref<Autor | null>(null);
+const isDeleteModalOpen = ref(false);
+const authorToDelete = ref<Autor | null>(null);
+
 const tableContainer = ref<HTMLElement | null>(null);
 
-// 🆕 ESTADO Y LÓGICA DE BÚSQUEDA DINÁMICA
+// Búsqueda dinámica
 const searchTerm = ref('');
 let searchTimeout: number | undefined = undefined;
 const SEARCH_DELAY_MS = 400;
 
-
-// Lógica de carga (Acepta el query)
+// Lógica de carga
 const fetchAuthors = async (query: string) => {
   isLoading.value = true;
   errorMsg.value = '';
   try {
-    // ⬅️ Pasamos el término de búsqueda al servicio
     authors.value = await getAllAuthors(query);
   } catch (error) {
     console.error("Error al cargar autores:", error);
@@ -31,42 +41,50 @@ const fetchAuthors = async (query: string) => {
   }
 };
 
-// LÓGICA DE DEBOUNCING
+// Debounce
 const debouncedFetchAuthors = () => {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
+  if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     fetchAuthors(searchTerm.value);
   }, SEARCH_DELAY_MS);
 };
 
-// 3. Vigilar el cambio de searchTerm y ejecutar el Debounce
 watch(searchTerm, () => {
   debouncedFetchAuthors();
 });
 
-// Manejadores de acciones
+// Manejadores
 const handleEdit = (author: Autor) => {
-  console.log(`Editar Autor: ${author.Nombre}`);
-  isModalOpen.value = true;
+  authorToEdit.value = author;
+  isEditModalOpen.value = true;
 };
 
-const handleDelete = async (id: number) => {
-  if (!confirm('¿Está seguro de que desea eliminar este autor? Esta acción no se puede deshacer.')) return;
+
+
+const openDeleteModal = (author: Autor) => {
+  authorToDelete.value = author;
+  isDeleteModalOpen.value = true;
+};
+
+
+const handleConfirmDelete = async () => {
+  if (!authorToDelete.value) return;
 
   try {
-    await deleteAuthor(id);
-    authors.value = authors.value.filter(a => a.AutorID !== id);
-    console.log(`Autor ID: ${id} eliminado.`);
+    await deleteAuthor(authorToDelete.value.AutorID);
+    authors.value = authors.value.filter(
+        a => a.AutorID !== authorToDelete.value!.AutorID
+    );
+    authorToDelete.value = null;
+    isDeleteModalOpen.value = false;
   } catch (error) {
-    console.error("Error al eliminar autor:", error);
+    console.error(error);
     errorMsg.value = "Error al eliminar. Verifique si el autor aún tiene libros asociados.";
+    isDeleteModalOpen.value = false;
   }
 };
 
-
-// Cargar al montar el componente
+// Cargar al montar
 onMounted(() => {
   fetchAuthors('');
 });
@@ -74,9 +92,8 @@ onMounted(() => {
 
 <template>
   <main class="w-full h-full p-4 bg-base-100 rounded-lg shadow-md">
-
     <div class="flex flex-col md:flex-row items-center justify-between mb-4 gap-3">
-      <h1 class="text-xl font-bold">✍️ Gestión de Autores</h1>
+      <h1 class="text-xl font-bold">Gestión de Autores</h1>
 
       <div class="flex gap-3 w-full md:w-auto items-center">
         <SearchBar
@@ -84,7 +101,7 @@ onMounted(() => {
             placeholder="Buscar autor por nombre..."
         />
 
-        <button class="btn btn-primary btn-sm h-9" @click="isModalOpen = true">
+        <button class="btn btn-primary btn-sm h-9" @click="isAddModalOpen = true">
           Crear Autor
         </button>
       </div>
@@ -117,39 +134,56 @@ onMounted(() => {
         <tbody>
         <tr v-for="author in authors" :key="author.AutorID">
           <td class="font-mono text-xs opacity-60">{{ author.AutorID }}</td>
-
+          <td><div class="text-sm">{{ author.Nombre }}</div></td>
           <td>
-            <div class="text-sm">{{ author.Nombre }}</div>
+              <span class="badge badge-sm badge-info badge-outline">
+                {{ author.Nacionalidad }}
+              </span>
           </td>
-
-          <td>
-            <span class="badge badge-sm badge-info badge-outline">
-              {{ author.Nacionalidad }}
-            </span>
-          </td>
-
           <td class="text-center space-x-2">
             <button
-                class="btn btn-ghost btn-xs text-info"
+                class="btn btn-sm btn-info"
                 @click="handleEdit(author)"
             >
               Editar
             </button>
-            <button
-                class="btn btn-ghost btn-xs text-error"
-                @click="handleDelete(author.AutorID)"
-            >
+
+            <button class="btn btn-sm btn-error" @click="openDeleteModal(author)">
               Eliminar
             </button>
+
           </td>
         </tr>
         </tbody>
       </table>
     </div>
 
-    <div v-else-if="!isLoading" class="text-center py-8 text-gray-500">
+    <!-- Modal de agregar -->
+    <AddAuthorModal
+        v-if="isAddModalOpen"
+        @close="isAddModalOpen = false"
+        @author-added="() => fetchAuthors(searchTerm)"
+    />
+
+    <!-- Modal de editar -->
+    <EditAuthorModal
+        v-if="isEditModalOpen && authorToEdit"
+        :author="authorToEdit"
+        @close="() => { isEditModalOpen = false; authorToEdit = null }"
+        @author-updated="() => fetchAuthors(searchTerm)"
+    />
+
+
+    <DeleteAuthorModal
+        v-if="authorToDelete"
+    :author="authorToDelete"
+    modal-id="delete_author_modal"
+    @close="authorToDelete = null"
+    @confirm="handleConfirmDelete"
+    />
+
+    <div v-if="!isLoading && authors.length === 0 && !errorMsg" class="text-center py-8 text-gray-500">
       No hay autores registrados aún.
     </div>
-
   </main>
 </template>
