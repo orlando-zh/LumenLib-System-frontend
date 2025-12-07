@@ -19,14 +19,14 @@ import SubMenu from '@/components/ui/SubMenu.vue'
         <OptionSidebar route="/admin/libros" name="Libros" icon="#" />
         <hr class="my-1.5 border-gray-400" />
 
+        <OptionSidebar route="/admin/categorias" name="Categorías" icon="#" />
+        <hr class="my-1.5 border-gray-400" />
 
-        <!-- Libros -->
-        <SubMenu name="Libros">
-          <OptionSidebar route="/admin/journal-list" name="Libro diario" icon="#" />
-          <OptionSidebar route="/admin/general-ledger" name="Libro mayor" icon="#" />
-          <OptionSidebar route="/admin/trial-balance" name="Balance de comprobación" icon="#" />
-          <OptionSidebar route="/admin/financial-statements" name="Estados financieros" icon="#" />
-        </SubMenu>
+        <OptionSidebar route="/admin/autores" name="Autores" icon="#" />
+        <hr class="my-1.5 border-gray-400" />
+
+
+
       </ul>
     </div>
   </aside>

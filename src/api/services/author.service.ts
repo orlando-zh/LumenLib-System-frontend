@@ -6,9 +6,11 @@ import type { Autor, CreateAuthorDTO, UpdateAuthorDTO } from '@/api/interfaces/a
 const AUTHORS_ENDPOINT = '/api/library/authors';
 
 // 1. Obtener todos los autores
-export const getAllAuthors = async (): Promise<Autor[]> => {
-    // El generic <Autor[]> le dice a Axios que la respuesta será un array de autores
-    const response = await booksApi.get<Autor[]>(AUTHORS_ENDPOINT);
+export const getAllAuthors = async (nombre?: string): Promise<Autor[]> => {
+    // Si se envía un nombre, lo ponemos en los params
+    const params = nombre ? { nombre } : {};
+
+    const response = await booksApi.get<Autor[]>(AUTHORS_ENDPOINT, { params });
     return response.data;
 };
 

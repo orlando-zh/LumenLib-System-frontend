@@ -1,8 +1,6 @@
 import { usersApi } from '@/api/axiosConfig';
 import type { Usuario, CreateUserDTO } from '@/api/interfaces/user.interface';
 
-
-
 // Obtener todos los usuarios
 export const getAllUsers = async (): Promise<Usuario[]> => {
     // El token se inyecta solo gracias al interceptor en axiosConfig
