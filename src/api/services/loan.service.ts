@@ -1,5 +1,5 @@
 import { booksApi } from '@/api/axiosConfig';
-import type { ActiveLoan, LoanTransactionDTO, LoanCreatedResponse } from '@/api/interfaces/loans.interface';
+import type { ActiveLoan, LoanHistory, LoanTransactionDTO, LoanCreatedResponse } from '@/api/interfaces/loans.interface';
 
 export default {
     async getActiveLoans(): Promise<ActiveLoan[]> {
@@ -20,8 +20,8 @@ export default {
     },
 
 
-    async getMyLoanHistory(): Promise<ActiveLoan[]> {
-        const response = await booksApi.get<ActiveLoan[]>('/api/library/loans/my-history');
+    async getMyLoanHistory(): Promise<LoanHistory[]> {
+        const response = await booksApi.get<LoanHistory[]>('/api/library/loans/my-history');
         return response.data;
     }
 };
