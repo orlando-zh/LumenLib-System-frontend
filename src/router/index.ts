@@ -16,6 +16,9 @@ import ReaderCatalog from "@/components/ui/ReaderCatalog.vue"
 import ReaderHistory from "@/components/ui/ReaderHistory.vue"
 import LibraryCategoriesView from "@/components/ui/LibraryCategoriesView.vue";
 import LibraryAuthorsView from "@/components/ui/LibraryAuthorsView.vue";
+import ActiveLoansView from "@/views/ActiveLoansView.vue";
+import RegisterLoan from "@/views/RegisterLoan.vue";
+
 
 const routes: Array<RouteRecordRaw> = [
     // 1. RAÍZ: Redirige al login (o el guardián lo moverá si ya hay sesión)
@@ -64,6 +67,16 @@ const routes: Array<RouteRecordRaw> = [
                 name: 'admin-books',
                 component: LibraryBooks
             },
+            {
+                path: 'prestamos-activos',
+                name: 'admin-active-loans',
+                component: ActiveLoansView
+            },
+            {
+                path: 'registrar-prestamo',
+                name: 'admin-register-loan',
+                component: RegisterLoan
+            }
         ]
     },
 
