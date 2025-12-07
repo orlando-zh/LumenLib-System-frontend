@@ -5,10 +5,11 @@ import type { Autor } from '@/api/interfaces/author.interface';
 import AddAuthorModal from "@/components/modals/AddAuthorModal.vue";
 import EditAuthorModal from '@/components/modals/EditAuthorModal.vue';
 import DeleteAuthorModal from '@/components/modals/DeleteAuthorModal.vue';
+import { userAuth } from '@/stores/authStore';
 
 import SearchBar from '@/components/ui/SearchBar.vue';
 
-
+const authStore = userAuth();
 const authors = ref<Autor[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
@@ -148,7 +149,7 @@ onMounted(() => {
               Editar
             </button>
 
-            <button class="btn btn-sm btn-error" @click="openDeleteModal(author)">
+            <button v-if="authStore.isAdmin" class="btn btn-sm btn-error" @click="openDeleteModal(author)">
               Eliminar
             </button>
 

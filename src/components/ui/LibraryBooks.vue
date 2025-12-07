@@ -5,8 +5,9 @@ import { getAllBooks, deleteBook } from '@/api/services/book.service';
 import AddBookModal from '@/components/modals/AddBookModal.vue';
 import EditBookModal from '@/components/modals/EditBookModal.vue';
 import SearchBar from '@/components/ui/SearchBar.vue';
+import { userAuth } from '@/stores/authStore';
 
-
+const authStore = userAuth();
 const showDeleteModal = ref(false);
 const bookToDelete = ref<Libro | null>(null)
 const searchTerm = ref('');
@@ -155,7 +156,7 @@ onMounted(() => {
             <button class="btn btn-sm btn-info" @click="openEditModal(book)">
               Editar
             </button>
-            <button class="btn btn-sm btn-error" @click="openDeleteModal(book)">
+            <button v-if="authStore.isAdmin" class="btn btn-sm btn-error" @click="openDeleteModal(book)">
               Eliminar
             </button>
           </td>

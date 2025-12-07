@@ -6,7 +6,9 @@ import UserModal from '@/components/modals/UserModal.vue';
 import EditUserModal from '@/components/modals/EditUserModal.vue';
 import DeleteUserModal from '@/components/modals/DeleteUserModal.vue';
 import SearchBar from '@/components/ui/SearchBar.vue';
+import { userAuth } from '@/stores/authStore';
 
+const authStore = userAuth();
 // Tabla y búsqueda
 const users = ref<Usuario[]>([]);
 const isLoading = ref(true);
@@ -92,7 +94,10 @@ onMounted(() => fetchUsers());
       <h1 class="text-xl font-bold">Catálogo de Usuarios</h1>
       <div class="flex gap-3 w-full md:w-auto items-center">
         <SearchBar v-model="searchTerm" placeholder="Buscar por nombre" />
-        <button class="btn btn-primary btn-sm h-9" @click="isAddModalOpen = true">
+        <button
+            v-if="authStore.isAdmin"
+            class="btn btn-primary btn-sm h-9"
+            @click="isAddModalOpen = true">
           Agregar Usuario
         </button>
       </div>
@@ -126,8 +131,8 @@ onMounted(() => fetchUsers());
           <td>{{ user.Email }}</td>
           <td>{{ user.Rol }}</td>
           <td class="text-center space-x-2">
-            <button class="btn btn-sm btn-info" @click="openEditModal(user)">Editar</button>
-            <button class="btn btn-sm btn-error" @click="openDeleteModal(user)">Eliminar</button>
+            <button  v-if="authStore.isStaff"  class="btn btn-sm btn-info" @click="openEditModal(user)">Editar</button>
+            <button  v-if="authStore.isAdmin"  class="btn btn-sm btn-error" @click="openDeleteModal(user)">Eliminar</button>
           </td>
         </tr>
         </tbody>

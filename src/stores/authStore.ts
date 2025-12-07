@@ -76,6 +76,7 @@ export const userAuth = defineStore('userAuth', {
             return role === 'Admin' || role === 'Bibliotecario';
         },
 
+        isAdmin: (state) => state.user?.Rol === 'Admin',
         isLector: (state) => state.user?.Rol === 'Lector'
     }
 });

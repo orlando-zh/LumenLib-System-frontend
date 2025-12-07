@@ -2,7 +2,9 @@
 import { ref, onMounted, watch } from 'vue';
 import categoryService from '@/api/services/category.service';
 import type { Category } from '@/api/interfaces/category.interfaces';
+import { userAuth } from '@/stores/authStore';
 
+const authStore = userAuth();
 import SearchBar from '@/components/ui/SearchBar.vue';
 import AddCategoryModal from '@/components/modals/AddCategoryModal.vue';
 import EditCategoryModal from '@/components/modals/EditCategoryModal.vue';
@@ -129,7 +131,7 @@ onMounted(() => {
           <td><div class="text-sm">{{ cat.NombreCategoria }}</div></td>
           <td class="text-center space-x-2">
             <button class="btn btn-sm btn-info" @click="handleEdit(cat)">Editar</button>
-            <button class="btn btn-sm btn-error" @click="openDeleteModal(cat)">Eliminar</button>
+            <button v-if="authStore.isAdmin" class="btn btn-sm btn-error" @click="openDeleteModal(cat)">Eliminar</button>
           </td>
         </tr>
         </tbody>
