@@ -17,7 +17,7 @@ import ReaderHistory from "@/components/ui/ReaderHistory.vue"
 import LibraryCategoriesView from "@/components/ui/LibraryCategoriesView.vue";
 import LibraryAuthorsView from "@/components/ui/LibraryAuthorsView.vue";
 import ActiveLoansView from "@/views/ActiveLoansView.vue";
-import RegisterLoan from "@/views/RegisterLoan.vue";
+import RegisterLoanModal from "@/components/modals/RegisterLoanModal.vue";
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -72,7 +72,7 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: 'registrar-prestamo',
                 name: 'admin-register-loan',
-                component: RegisterLoan
+                component: RegisterLoanModal
             }
         ]
     },

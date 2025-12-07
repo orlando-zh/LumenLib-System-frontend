@@ -1,5 +1,5 @@
 import { booksApi } from '@/api/axiosConfig';
-import type { ActiveLoan, LoanTransactionDTO } from '@/api/interfaces/loans.interface';
+import type { ActiveLoan, LoanTransactionDTO, LoanCreatedResponse } from '@/api/interfaces/loans.interface';
 
 export default {
     async getActiveLoans(): Promise<ActiveLoan[]> {
@@ -14,8 +14,8 @@ export default {
         return response.data;
     },
 
-    async createLoan(data: LoanTransactionDTO) {
-        const response = await booksApi.post('/api/library/loans', data);
+    async createLoan(data: LoanTransactionDTO): Promise<LoanCreatedResponse> {
+        const response = await booksApi.post<LoanCreatedResponse>('/api/library/loans', data);
         return response.data;
     }
 };
