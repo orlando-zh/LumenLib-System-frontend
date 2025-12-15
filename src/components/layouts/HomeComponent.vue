@@ -2,25 +2,35 @@
 import TopReadersWidget from '@/components/widgets/TopReadersWidget.vue';
 import CategoryStatsWidget from '@/components/widgets/CategoryStatsWidget.vue';
 import ActiveLoansWidget from '@/components/widgets/ActiveLoansWidget.vue';
+import TopAuthorsWidget from '@/components/widgets/TopAuthorsWidget.vue';
 </script>
 
 <template>
-  <main class="p-6">
-    <h1 class="text-3xl font-bold mb-8 text-gray-800">
-      Panel de Control de la Biblioteca
-    </h1>
+  <main class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-slate-800 mb-2">
+        Panel de Control
+      </h1>
+      <p class="text-slate-600">Gestión de Biblioteca - Dashboard Principal</p>
+    </div>
 
-    <!-- GRID GENERAL -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-      <!-- Widgets pequeños -->
-      <div class="space-y-6">
-        <ActiveLoansWidget />
-        <TopReadersWidget />
+      <!-- Columna Izquierda - Widgets pequeños con altura fija -->
+      <div class="lg:col-span-4 flex flex-col gap-6">
+        <div class="flex-1">
+          <TopReadersWidget />
+        </div>
+        <div class="flex-1">
+          <TopAuthorsWidget />
+        </div>
       </div>
 
-      <!-- Widget grande en dos columnas -->
-      <div class="lg:col-span-2">
+      <!-- Columna Central y Derecha -->
+      <div class="lg:col-span-8 flex flex-col gap-6">
+        <ActiveLoansWidget />
         <CategoryStatsWidget />
       </div>
 

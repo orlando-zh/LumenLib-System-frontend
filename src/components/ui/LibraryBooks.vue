@@ -4,6 +4,7 @@ import type { Libro } from '@/api/interfaces/book.interface';
 import { getAllBooks, deleteBook } from '@/api/services/book.service';
 import AddBookModal from '@/components/modals/AddBookModal.vue';
 import EditBookModal from '@/components/modals/EditBookModal.vue';
+import DeleteBookModal from '@/components/modals/DeleteBookModal.vue';
 import SearchBar from '@/components/ui/SearchBar.vue';
 import { userAuth } from '@/stores/authStore';
 
