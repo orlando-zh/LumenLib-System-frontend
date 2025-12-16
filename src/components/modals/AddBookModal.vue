@@ -3,12 +3,16 @@ import { ref, reactive, onMounted } from 'vue'
 
 // --- CAMBIO AQUÍ: Importación con Destructuring ---
 import { createBook } from '@/api/services/book.service'
-
 // Nota: categoryService lo definimos como "export default", así que se queda igual
 import categoryService from '@/api/services/category.service.ts'
+import { getAllAuthors } from '@/api/services/author.service'
 
 import type { CreateBookDTO } from '@/api/interfaces/book.interface'
 import type { Category } from '@/api/interfaces/category.interfaces'
+import type { Autor } from '@/api/interfaces/author.interface'
+
+
+
 
 const emit = defineEmits(['close', 'book-added'])
 
@@ -26,25 +30,29 @@ const isSaving = ref(false)
 const isLoadingDependencies = ref(true)
 const errors = ref<Record<string,string>>({})
 const categories = ref<Category[]>([])
-const authors = ref<{ AutorID: number, Nombre: string }[]>([])
+const authors = ref<Autor[]>([])
 
 onMounted(async () => {
   try {
-    categories.value = await categoryService.getAll();
+    isLoadingDependencies.value = true
 
-    // Autores simulados (MOCK)
-    authors.value = [
-      { AutorID: 1, Nombre: 'Gabriel García Márquez' },
-      { AutorID: 2, Nombre: 'J.K. Rowling' },
-      { AutorID: 3, Nombre: 'Robert C. Martin' }
-    ];
+    const [categoriesResponse, authorsResponse] = await Promise.all([
+      categoryService.getAll(),
+      getAllAuthors()
+    ])
+
+    categories.value = categoriesResponse
+    authors.value = authorsResponse
+
   } catch (error) {
-    console.error("Error cargando dependencias:", error);
-    errors.value.global = "No se pudieron cargar las listas.";
+    console.error('Error cargando dependencias:', error)
+    errors.value.global = 'No se pudieron cargar categorías o autores.'
   } finally {
-    isLoadingDependencies.value = false;
+    isLoadingDependencies.value = false
   }
 })
+
+
 
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
